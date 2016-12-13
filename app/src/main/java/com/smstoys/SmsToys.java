@@ -1,14 +1,22 @@
 package com.smstoys;
 
+import android.Manifest;
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,10 +42,54 @@ public class SmsToys extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sms_toys);
+
+        requestSmsPermission(this);
+
+    }
+
+    private void requestSmsPermission(Activity thisActivity) {
+        // Here, thisActivity is the current activity
+        if (ContextCompat.checkSelfPermission(thisActivity, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(thisActivity, new String[]{Manifest.permission.SEND_SMS}, 201); //201 is just an ID to identify this request.
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case 201: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Context context = getApplicationContext();
+                    CharSequence text = "Permission to Send SMS Granted";
+                    int duration = Toast.LENGTH_SHORT;
+
+                    Toast toast = Toast.makeText(context, text, duration);
+                    toast.show();
+
+                } else {
+
+                    Context context = getApplicationContext();
+                    CharSequence text = "Permission to Send SMS Denied";
+                    int duration = Toast.LENGTH_SHORT;
+
+                    Toast toast = Toast.makeText(context, text, duration);
+                    toast.show();
+                }
+            }
+        }
     }
 
     public void btnProcess_Click(View view) {
         Log.d("[DEBUG]","SmsToys.btnProcess_Click: " + view.toString() + " - Context");
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+            Context context = getApplicationContext();
+            CharSequence text = "Required Permission Was Not Granted";
+            int duration = Toast.LENGTH_SHORT;
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+            return;
+        }
         new FetchEmailsTask().execute();
     }
 
