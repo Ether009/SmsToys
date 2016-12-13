@@ -50,8 +50,9 @@ class ProcessEmailTask extends AsyncTask<Object, Integer, Integer> {
 
         //--Construct the Message
         //TODO Make sms message configurable from the email data.
+        //TODO Make sure sms message conforms to sms limit, or make it send multiple. Config should warn if multiple.
         Log.d("[DEBUG]","SmsToys.ProcessEmailTask.doInBackground - " + this.toString() + " - Prepare Message");
-        String message = "Vi har tagit emot ditt ärende "+data.get("ibNummer")+" gällande \""+data.get("beskrivning")+"\". En elektriker kommer kontakta dig så snart som möjligt för att boka en tid.";
+        String message = "Vi har tagit emot ditt ärende "+data.get("ibNummer")+". En elektriker kommer kontakta dig så snart som möjligt för att boka en tid.";
 
         Log.d("[DEBUG]","SmsToys.ProcessEmailTask.doInBackground - " + this.toString() + " - SMS Being sent to " + phoneNumber + " with message: " + message);
         SmsManager smsManager = SmsManager.getDefault();
