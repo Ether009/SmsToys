@@ -1,9 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">SmsToys</string>
     <string name="process">Process</string>
-    <string name="fetcher">Fetcher: %s</string>
     <string name="fetcher_idle">Fetcher: Idle</string>
-    <string name="fetching">Fetching Mail nr: %d</string>
     <string name="ssl">SSL</string>
     <string name="host">Host</string>
     <string name="password">Password</string>
