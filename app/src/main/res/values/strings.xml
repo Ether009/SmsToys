@@ -13,4 +13,5 @@
     <string name="subject">Subject</string>
     <string name="save">Save</string>
     <string name="email_configuration">Email Configuration</string>
+    <string name="override_date_and_time">Override Date and Time</string>
 </resources>

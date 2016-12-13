@@ -36,15 +36,15 @@ import javax.mail.Session;
 import javax.mail.Store;
 import javax.mail.URLName;
 
-public class SmsToys extends AppCompatActivity {
+public class SmsToys extends AppCompatActivity implements DatePickerFragment.OnDateSelectListener,
+        TimePickerFragment.OnTimeSelectListener{
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sms_toys);
-
         requestSmsPermission(this);
-
+        UpdateCurrentTime();
     }
 
     private void requestSmsPermission(Activity thisActivity) {
@@ -99,7 +99,64 @@ public class SmsToys extends AppCompatActivity {
         startActivity(intent);
     }
 
+    public void btnSetTime_Click(View view) {
+        Log.d("[DEBUG]","SmsToys.btnSetTime_Click: " + view.toString() + " - Context");
+        showDatePickerDialog();
+    }
+
+    public void OnDateSelected(int year, int month, int day) {
+        SharedPreferences dateSettings = getSharedPreferences("DateSettings", 0);
+        Log.d("[DEBUG]","SmsToys.OnDateSelected: Date Selected");
+
+        SharedPreferences.Editor editor = dateSettings.edit();
+        editor.putInt("lastCheckYear",year);
+        editor.putInt("lastCheckMonth",month);
+        editor.putInt("lastCheckDay",day);
+        editor.apply();
+
+        UpdateCurrentTime();
+        showTimePickerDialog();
+    }
+
+    public void OnTimeSelected(int hour, int minute) {
+        SharedPreferences dateSettings = getSharedPreferences("DateSettings", 0);
+        Log.d("[DEBUG]","SmsToys.OnTimeSelected: Time Selected");
+
+        SharedPreferences.Editor editor = dateSettings.edit();
+        editor.putInt("lastCheckHour", hour);
+        editor.putInt("lastCheckMinute", minute);
+        editor.apply();
+
+        UpdateCurrentTime();
+    }
+
+    private void showDatePickerDialog() {
+        DatePickerFragment newFragment = new DatePickerFragment();
+        newFragment.show(getSupportFragmentManager(),"datePicker");
+    }
+
+    private void showTimePickerDialog() {
+        TimePickerFragment newFragment = new TimePickerFragment();
+        newFragment.show(getSupportFragmentManager(), "timePicker");
+    }
+
+    private void UpdateCurrentTime() {
+        SharedPreferences dateSettings = getSharedPreferences("DateSettings", 0);
+
+        //TODO Use the dedicated method for this.
+        int iYear = dateSettings.getInt("lastCheckYear",2000);
+        int iMonth = dateSettings.getInt("lastCheckMonth", 0);
+        int iDay = dateSettings.getInt("lastCheckDay", 0);
+        int iHour = dateSettings.getInt("lastCheckHour", 0);
+        int iMinute = dateSettings.getInt("lastCheckMinute", 0);
+
+        TextView txtLastTime = (TextView)findViewById(R.id.txtLastTime);
+        txtLastTime.setText(String.valueOf(iHour) + ":" + String.valueOf(iMinute) + " " + String.valueOf(iDay) + "-" + String.valueOf(iMonth+1) + "-" + String.valueOf(iYear));
+    }
+
     private class FetchEmailsTask extends AsyncTask<Void, Integer, List<String>> {
+        Date lastChecked;
+        Date currentTime;
 
         @Override
         protected List<String> doInBackground(Void... params) {
@@ -128,8 +185,8 @@ public class SmsToys extends AppCompatActivity {
             );
 
             Log.d("[DEBUG]","SmsToys.FetchEmailsTask.doInBackground: " + this.toString() + " - Loading Date Settings");
-            Date lastChecked = getDate(true);
-            Date currentTime = getDate(false);
+            lastChecked = getDate(true);
+            currentTime = getDate(false);
             Log.d("[DEBUG]","SmsToys.FetchEmailsTask.doInBackground: " + this.toString()
                     + " - Last Checked Time: " + lastChecked.toString()
                     + " - Current Time: " + currentTime.toString()
@@ -306,13 +363,22 @@ public class SmsToys extends AppCompatActivity {
         SharedPreferences dateSettings = getSharedPreferences("DateSettings", 0);
         Calendar cal = Calendar.getInstance();
         if (last) {
-            cal.set(Calendar.YEAR, dateSettings.getInt("lastCheckYear",2000));
-            cal.set(Calendar.MONTH, dateSettings.getInt("lastCheckMonth",0));
-            cal.set(Calendar.DATE, dateSettings.getInt("lastCheckDay",1));
-            cal.set(Calendar.HOUR_OF_DAY, dateSettings.getInt("lastCheckHour",0));
-            cal.set(Calendar.MINUTE, dateSettings.getInt("lastCheckMinute",0));
+            cal.set(Calendar.YEAR, dateSettings.getInt("lastCheckYear", 2000));
+            cal.set(Calendar.MONTH, dateSettings.getInt("lastCheckMonth", 0));
+            cal.set(Calendar.DATE, dateSettings.getInt("lastCheckDay", 1));
+            cal.set(Calendar.HOUR_OF_DAY, dateSettings.getInt("lastCheckHour", 0));
+            cal.set(Calendar.MINUTE, dateSettings.getInt("lastCheckMinute", 0));
             cal.set(Calendar.SECOND, 0);
             cal.set(Calendar.MILLISECOND, 0);
+        } else {
+            SharedPreferences.Editor editor = dateSettings.edit();
+            editor.putInt("lastCheckYear", cal.get(Calendar.YEAR));
+            editor.putInt("lastCheckMonth", cal.get(Calendar.MONTH));
+            editor.putInt("lastCheckDay", cal.get(Calendar.DAY_OF_MONTH));
+            editor.putInt("lastCheckHour", cal.get(Calendar.HOUR_OF_DAY));
+            editor.putInt("lastCheckMinute", cal.get(Calendar.MINUTE));
+            editor.apply();
+            UpdateCurrentTime();
         }
         return cal.getTime();
     }
