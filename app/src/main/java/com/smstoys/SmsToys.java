@@ -14,8 +14,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
 import javax.mail.BodyPart;
 import javax.mail.Folder;
@@ -184,6 +186,16 @@ public class SmsToys extends AppCompatActivity {
             tvFetcherStatus.setText(getString(R.string.fetcher, "Idle"));
             ProgressBar prgProcess = (ProgressBar)findViewById(R.id.prgProcess);
             prgProcess.setVisibility(View.INVISIBLE);
+
+            HashMap<String, Pattern> patterns = getPatterns(); //new HashMap<>();
+
+            for (String mailContent : resultMessages) {
+                try {
+                    new ProcessEmailTask(patterns).execute(mailContent);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         @Override
@@ -213,6 +225,29 @@ public class SmsToys extends AppCompatActivity {
             }
             return results;
         }
+    }
+
+    private HashMap<String, Pattern> getPatterns() {
+        HashMap<String, Pattern> patternResults = new HashMap<>();
+
+        patternResults.put("arendeNummer", Pattern.compile(".rendenummer:\\s*(.*?)\\s*IB\\-Nummer"));
+        patternResults.put("ibNummer", Pattern.compile("IB\\-Nummer:\\s*(.*?)\\s*Rad"));
+        patternResults.put("rad", Pattern.compile("Rad:\\s*(.*?)\\s*Inkommen"));
+        patternResults.put("inkommen", Pattern.compile("Inkommen:\\s*(.*?)\\s*Din\\sroll"));
+        patternResults.put("roll", Pattern.compile("Din\\sroll:\\s*(.*?)\\s*Status"));
+        patternResults.put("status", Pattern.compile("Status:\\s*(.*?)\\s*Adress"));
+        patternResults.put("adress", Pattern.compile("Adress:\\s*(.*?)\\s*Avser"));
+        patternResults.put("avser", Pattern.compile("Avser:\\s*(.*?)\\s*Beskrivning"));
+        patternResults.put("beskrivning", Pattern.compile("Beskrivning:\\s*(.*?)\\s*Notering"));
+        patternResults.put("notering", Pattern.compile("Notering:\\s*(.*?)\\s*Handl.ggare\\s\\d"));
+        patternResults.put("handlaggare", Pattern.compile("Handl.ggare\\s\\d\\s:\\s*(.*?)\\s*Telefon\\sHandl.ggare\\s\\d"));
+        patternResults.put("telefonHandlaggare", Pattern.compile("Telefon\\sHandl.ggare\\s\\d\\s:\\s*(.*?)\\s*Epost\\sHandl.ggare\\s\\d"));
+        patternResults.put("epostHandlaggare", Pattern.compile("Epost\\sHandl.ggare\\s\\d\\s*(.*?)\\s*Kontakt\\s\\d"));
+        patternResults.put("kontakt", Pattern.compile("Kontakt\\s\\d\\s:\\s*(.*?)\\s*Telefon\\sKontakt\\s\\d"));
+        patternResults.put("telefonKontakt", Pattern.compile("Telefon\\sKontakt\\s\\d\\s:\\s*(.*?)\\s*Epost\\skontakt\\s\\d\\s"));
+        patternResults.put("epostKontakt", Pattern.compile("Epost\\skontakt\\s\\d\\s:\\s*(.*?)\\s*Med\\sv.nliga\\sh.lsningar"));
+
+        return patternResults;
     }
 
     private Date getDate(boolean last) {
