@@ -5,7 +5,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,6 +22,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -48,8 +55,23 @@ public class SmsToys extends AppCompatActivity implements DatePickerFragment.OnD
         super.onCreate(savedInstanceState);
         mActivity = this;
         setContentView(R.layout.activity_sms_toys);
+        updateCheck();
         requestSmsPermission(this);
         handler.post(updateTime);
+    }
+
+    private void updateCheck() {
+        updateCheckTask updater = new updateCheckTask();
+        updater.execute(getVersionCode(mActivity));
+    }
+
+    private static int getVersionCode(Context context) {
+        PackageManager pm = context.getPackageManager();
+        try {
+            PackageInfo pi = pm.getPackageInfo(context.getPackageName(), 0);
+            return pi.versionCode;
+        } catch (PackageManager.NameNotFoundException ignored) {}
+        return 0;
     }
 
     private final Runnable updateTime = new Runnable() {
@@ -379,5 +401,80 @@ public class SmsToys extends AppCompatActivity implements DatePickerFragment.OnD
             editor.apply();
         }
         return cal.getTime();
+    }
+
+    class updateCheckTask extends AsyncTask<Integer, Void, Integer> {
+        int currentVersion;
+
+        @Override
+        protected Integer doInBackground(Integer... i) {
+            currentVersion = i[0];
+            return Integer.valueOf(downloadText());
+        }
+
+        @Override
+        protected void onPostExecute(Integer result) {
+            if (result > currentVersion) {
+                Intent updateIntent = new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://www.dropbox.com/s/awrrb0j4h1mozy2/latestVersion.apk?dl=1"));
+                startActivity(updateIntent);
+            }
+        }
+
+        private String downloadText() {
+            int BUFFER_SIZE = 2000;
+            InputStream in;
+            try {
+                in = openHttpConnection();
+            } catch (IOException e1) {
+                return "";
+            }
+
+            String str = "";
+            if (in != null) {
+                InputStreamReader isr = new InputStreamReader(in);
+                int charRead;
+                char[] inputBuffer = new char[BUFFER_SIZE];
+                try {
+                    while ((charRead = isr.read(inputBuffer)) > 0) {
+                        // ---convert the chars to a String---
+                        String readString = String.copyValueOf(inputBuffer, 0, charRead);
+                        str += readString;
+                        inputBuffer = new char[BUFFER_SIZE];
+                    }
+                    in.close();
+                } catch (IOException e) {
+                    return "";
+                }
+            }
+            return str;
+        }
+
+        private InputStream openHttpConnection() throws IOException {
+            InputStream in = null;
+            int response;
+
+            URL url = new URL("https://www.dropbox.com/s/pt6okhy0j9g9h94/latestVersion?dl=1");
+            URLConnection conn = url.openConnection();
+
+            if (!(conn instanceof HttpURLConnection))
+                throw new IOException("Not an HTTP connection");
+
+            try {
+                HttpURLConnection httpConn = (HttpURLConnection) conn;
+                httpConn.setAllowUserInteraction(false);
+                httpConn.setInstanceFollowRedirects(true);
+                httpConn.setRequestMethod("GET");
+                httpConn.connect();
+
+                response = httpConn.getResponseCode();
+                if (response == HttpURLConnection.HTTP_OK) {
+                    in = httpConn.getInputStream();
+                }
+            } catch (Exception ex) {
+                throw new IOException("Error connecting");
+            }
+            return in;
+        }
     }
 }
