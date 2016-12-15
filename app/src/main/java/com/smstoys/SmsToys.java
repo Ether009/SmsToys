@@ -378,7 +378,6 @@ public class SmsToys extends AppCompatActivity implements DatePickerFragment.OnD
             editor.putInt("lastCheckHour", cal.get(Calendar.HOUR_OF_DAY));
             editor.putInt("lastCheckMinute", cal.get(Calendar.MINUTE));
             editor.apply();
-            UpdateCurrentTime();
         }
         return cal.getTime();
     }
