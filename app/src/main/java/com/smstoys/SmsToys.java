@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -39,13 +40,24 @@ import javax.mail.URLName;
 public class SmsToys extends AppCompatActivity implements DatePickerFragment.OnDateSelectListener,
         TimePickerFragment.OnTimeSelectListener{
 
+    private Activity mActivity;
+    private final Handler handler = new Handler();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mActivity = this;
         setContentView(R.layout.activity_sms_toys);
         requestSmsPermission(this);
-        UpdateCurrentTime();
+        handler.post(updateTime);
     }
+
+    private final Runnable updateTime = new Runnable() {
+        @Override
+        public void run() {
+            UpdateLastTime.UpdateTime(mActivity);
+        }
+    };
 
     private void requestSmsPermission(Activity thisActivity) {
         // Here, thisActivity is the current activity
@@ -114,7 +126,7 @@ public class SmsToys extends AppCompatActivity implements DatePickerFragment.OnD
         editor.putInt("lastCheckDay",day);
         editor.apply();
 
-        UpdateCurrentTime();
+        handler.post(updateTime);
         showTimePickerDialog();
     }
 
@@ -127,7 +139,7 @@ public class SmsToys extends AppCompatActivity implements DatePickerFragment.OnD
         editor.putInt("lastCheckMinute", minute);
         editor.apply();
 
-        UpdateCurrentTime();
+        handler.post(updateTime);
     }
 
     private void showDatePickerDialog() {
@@ -138,20 +150,6 @@ public class SmsToys extends AppCompatActivity implements DatePickerFragment.OnD
     private void showTimePickerDialog() {
         TimePickerFragment newFragment = new TimePickerFragment();
         newFragment.show(getSupportFragmentManager(), "timePicker");
-    }
-
-    private void UpdateCurrentTime() {
-        SharedPreferences dateSettings = getSharedPreferences("DateSettings", 0);
-
-        //TODO Use the dedicated method for this.
-        int iYear = dateSettings.getInt("lastCheckYear",2000);
-        int iMonth = dateSettings.getInt("lastCheckMonth", 0);
-        int iDay = dateSettings.getInt("lastCheckDay", 0);
-        int iHour = dateSettings.getInt("lastCheckHour", 0);
-        int iMinute = dateSettings.getInt("lastCheckMinute", 0);
-
-        TextView txtLastTime = (TextView)findViewById(R.id.txtLastTime);
-        txtLastTime.setText(String.valueOf(iHour) + ":" + String.valueOf(iMinute) + " " + String.valueOf(iDay) + "-" + String.valueOf(iMonth+1) + "-" + String.valueOf(iYear));
     }
 
     private class FetchEmailsTask extends AsyncTask<Void, Integer, List<String>> {
@@ -305,6 +303,7 @@ public class SmsToys extends AppCompatActivity implements DatePickerFragment.OnD
                     e.printStackTrace();
                 }
             }
+            handler.post(updateTime);
         }
 
         @Override
