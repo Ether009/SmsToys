@@ -45,10 +45,26 @@ import javax.mail.Store;
 import javax.mail.URLName;
 
 public class SmsToys extends AppCompatActivity implements DatePickerFragment.OnDateSelectListener,
-        TimePickerFragment.OnTimeSelectListener{
+        TimePickerFragment.OnTimeSelectListener {
 
-    private Activity mActivity;
     private final Handler handler = new Handler();
+    private Activity mActivity;
+    private final Runnable updateTime = new Runnable() {
+        @Override
+        public void run() {
+            UpdateLastTime.UpdateTime(mActivity);
+        }
+    };
+
+    private static int getVersionCode(Context context) {
+        PackageManager pm = context.getPackageManager();
+        try {
+            PackageInfo pi = pm.getPackageInfo(context.getPackageName(), 0);
+            return pi.versionCode;
+        } catch (PackageManager.NameNotFoundException ignored) {
+        }
+        return 0;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,22 +80,6 @@ public class SmsToys extends AppCompatActivity implements DatePickerFragment.OnD
         updateCheckTask updater = new updateCheckTask();
         updater.execute(getVersionCode(mActivity));
     }
-
-    private static int getVersionCode(Context context) {
-        PackageManager pm = context.getPackageManager();
-        try {
-            PackageInfo pi = pm.getPackageInfo(context.getPackageName(), 0);
-            return pi.versionCode;
-        } catch (PackageManager.NameNotFoundException ignored) {}
-        return 0;
-    }
-
-    private final Runnable updateTime = new Runnable() {
-        @Override
-        public void run() {
-            UpdateLastTime.UpdateTime(mActivity);
-        }
-    };
 
     private void requestSmsPermission(Activity thisActivity) {
         // Here, thisActivity is the current activity
@@ -115,7 +115,7 @@ public class SmsToys extends AppCompatActivity implements DatePickerFragment.OnD
     }
 
     public void btnProcess_Click(View view) {
-        Log.d("[DEBUG]","SmsToys.btnProcess_Click: " + view.toString() + " - Context");
+        Log.d("[DEBUG]", "SmsToys.btnProcess_Click: " + view.toString() + " - Context");
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
             Context context = getApplicationContext();
             CharSequence text = "Required Permission Was Not Granted";
@@ -128,24 +128,24 @@ public class SmsToys extends AppCompatActivity implements DatePickerFragment.OnD
     }
 
     public void btnEmailConfig_Click(View view) {
-        Log.d("[DEBUG]","SmsToys.btnProcess_Click: " + view.toString() + " - Context");
+        Log.d("[DEBUG]", "SmsToys.btnProcess_Click: " + view.toString() + " - Context");
         Intent intent = new Intent(this, EmailConfig.class);
         startActivity(intent);
     }
 
     public void btnSetTime_Click(View view) {
-        Log.d("[DEBUG]","SmsToys.btnSetTime_Click: " + view.toString() + " - Context");
+        Log.d("[DEBUG]", "SmsToys.btnSetTime_Click: " + view.toString() + " - Context");
         showDatePickerDialog();
     }
 
     public void OnDateSelected(int year, int month, int day) {
         SharedPreferences dateSettings = getSharedPreferences("DateSettings", 0);
-        Log.d("[DEBUG]","SmsToys.OnDateSelected: Date Selected");
+        Log.d("[DEBUG]", "SmsToys.OnDateSelected: Date Selected");
 
         SharedPreferences.Editor editor = dateSettings.edit();
-        editor.putInt("lastCheckYear",year);
-        editor.putInt("lastCheckMonth",month);
-        editor.putInt("lastCheckDay",day);
+        editor.putInt("lastCheckYear", year);
+        editor.putInt("lastCheckMonth", month);
+        editor.putInt("lastCheckDay", day);
         editor.apply();
 
         handler.post(updateTime);
@@ -154,7 +154,7 @@ public class SmsToys extends AppCompatActivity implements DatePickerFragment.OnD
 
     public void OnTimeSelected(int hour, int minute) {
         SharedPreferences dateSettings = getSharedPreferences("DateSettings", 0);
-        Log.d("[DEBUG]","SmsToys.OnTimeSelected: Time Selected");
+        Log.d("[DEBUG]", "SmsToys.OnTimeSelected: Time Selected");
 
         SharedPreferences.Editor editor = dateSettings.edit();
         editor.putInt("lastCheckHour", hour);
@@ -166,195 +166,12 @@ public class SmsToys extends AppCompatActivity implements DatePickerFragment.OnD
 
     private void showDatePickerDialog() {
         DatePickerFragment newFragment = new DatePickerFragment();
-        newFragment.show(getSupportFragmentManager(),"datePicker");
+        newFragment.show(getSupportFragmentManager(), "datePicker");
     }
 
     private void showTimePickerDialog() {
         TimePickerFragment newFragment = new TimePickerFragment();
         newFragment.show(getSupportFragmentManager(), "timePicker");
-    }
-
-    private class FetchEmailsTask extends AsyncTask<Void, Integer, List<String>> {
-        Date lastChecked;
-        Date currentTime;
-
-        @Override
-        protected List<String> doInBackground(Void... params) {
-            int progressCounter = 0;
-            int progressMax;
-
-            Log.d("[DEBUG]","SmsToys.FetchEmailsTask.doInBackground: " + this.toString() + " - Loading Email Settings");
-            SharedPreferences emailSettings = getSharedPreferences("EmailSettings", 0);
-            String host = emailSettings.getString("host","");
-            String user = emailSettings.getString("user","");
-            String password = emailSettings.getString("password","");
-            String port = emailSettings.getString("port","");
-            String protocol = emailSettings.getString("protocol","");
-            Boolean is_ssl = emailSettings.getBoolean("is_ssl",true);
-            String ssl_factory = emailSettings.getString("ssl_factory","");
-            String subject = emailSettings.getString("subject","");
-            Log.d("[DEBUG]","SmsToys.FetchEmailsTask.doInBackground: " + this.toString()
-                    + " - host: " + host
-                    + " - user: " + user
-                    + " - password: " + password
-                    + " - port: " + port
-                    + " - protocol: " + protocol
-                    + " - is_ssl: " + is_ssl.toString()
-                    + " - ssl factory: " + ssl_factory
-                    + " - subject: " + subject
-            );
-
-            Log.d("[DEBUG]","SmsToys.FetchEmailsTask.doInBackground: " + this.toString() + " - Loading Date Settings");
-            lastChecked = getDate(true);
-            currentTime = getDate(false);
-            Log.d("[DEBUG]","SmsToys.FetchEmailsTask.doInBackground: " + this.toString()
-                    + " - Last Checked Time: " + lastChecked.toString()
-                    + " - Current Time: " + currentTime.toString()
-            );
-
-            Log.d("[DEBUG]","SmsToys.FetchEmailsTask.doInBackground: " + this.toString() + " - Set up connection");
-            Properties props = new Properties();
-            if (is_ssl) {
-                props.setProperty("mail.pop3.ssl.trust", "*");
-                props.setProperty("mail.pop3.socketFactory.class", ssl_factory);
-                props.setProperty("mail.pop3.socketFactory.fallback", "false");
-                props.setProperty("mail.pop3.socketFactory.port", port);
-            }
-            props.setProperty("mail.pop3.port", port);
-            URLName url = new URLName(protocol, host, Integer.parseInt(port), null, user, password);
-            Session session = Session.getInstance(props, null);
-
-            Log.d("[DEBUG]","SmsToys.FetchEmailsTask.doInBackground: " + this.toString() + " - Connecting");
-            List<String> resultMessages = new ArrayList<>();
-            Store store;
-            Folder inbox;
-            Message[] inboxMessages;
-            try {
-                store = session.getStore(url);
-                store.connect();
-                Log.d("[DEBUG]","SmsToys.FetchEmailsTask.doInBackground: " + this.toString() + " - Checking for new mail");
-                inbox = store.getFolder("INBOX");
-                inbox.open(Folder.READ_ONLY);
-                inboxMessages = inbox.getMessages();
-                progressMax = inbox.getMessageCount();
-                if (inboxMessages.length == 0){
-                    return new ArrayList<>();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                return new ArrayList<>();
-            }
-
-            publishProgress(progressCounter, progressMax, 1);
-
-            Log.d("[DEBUG]","SmsToys.FetchEmailsTask.doInBackground: " + this.toString() + " - Fetch all mail");
-            // TODO: Fetch only mail that have not been fetched before. This will make the New filter meaningless so don't remove that when done as that could cause issues.
-            for (Message message : inboxMessages) {
-                try {
-                    message.getContent();
-                    progressCounter++;
-                    publishProgress(progressCounter, progressMax, 0);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            Log.d("[DEBUG]","SmsToys.FetchEmailsTask.doInBackground: " + this.toString() + " - Return only new mail");
-            List<Message> newMessages = new ArrayList<>();
-            for (Message message : inboxMessages) {
-                try {
-                    if (message.getSentDate().after(lastChecked) && message.getSentDate().before(currentTime)) {
-                        newMessages.add(message);
-                    }
-                } catch (MessagingException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            Log.d("[DEBUG]","SmsToys.FetchEmailsTask.doInBackground: " + this.toString() + " - Return only mail with correct subject");
-            List<Message> subjectMessages = new ArrayList<>();
-            for (Message message : newMessages) {
-                try {
-                    if (message.getSubject().toLowerCase().contains(subject.toLowerCase())) {
-                        subjectMessages.add(message);
-                    }
-                } catch (MessagingException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            Log.d("[DEBUG]","SmsToys.FetchEmailsTask.doInBackground: " + this.toString() + " - Return only each part");
-            for (Message message : subjectMessages) {
-                try {
-                    Multipart multipart = (Multipart) message.getContent();
-                    for (BodyPart bodypart : getFlatContentList(multipart)) {
-                        String content = (String) bodypart.getContent();
-                        resultMessages.add(content);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            return resultMessages;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            Log.d("[DEBUG]","SmsToys.FetchEmailsTask.onPreExecute: " + this.toString() + " - Thread Starting");
-            TextView tvFetcherStatus = (TextView)findViewById(R.id.tvFetcherStatus);
-            tvFetcherStatus.setText(getString(R.string.fetcher, "Starting"));
-            ProgressBar prgProcess = (ProgressBar)findViewById(R.id.prgProcess);
-            prgProcess.setVisibility(View.VISIBLE);
-        }
-
-        @Override
-        protected void onPostExecute(List<String> resultMessages) {
-            Log.d("[DEBUG]","SmsToys.FetchEmailsTask.onPostExecute: " + this.toString() + " - Thread Finishing");
-            TextView tvFetcherStatus = (TextView)findViewById(R.id.tvFetcherStatus);
-            tvFetcherStatus.setText(getString(R.string.fetcher, "Idle"));
-            ProgressBar prgProcess = (ProgressBar)findViewById(R.id.prgProcess);
-            prgProcess.setVisibility(View.INVISIBLE);
-
-            HashMap<String, Pattern> patterns = getPatterns(); //new HashMap<>();
-
-            for (String mailContent : resultMessages) {
-                try {
-                    new ProcessEmailTask(patterns).execute(mailContent);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            handler.post(updateTime);
-        }
-
-        @Override
-        protected void onProgressUpdate(Integer... progress) {
-            Log.d("[DEBUG]","SmsToys.FetchEmailsTask.onPostExecute: " + this.toString() + " - Progress: " + progress[0] + "/" + progress[1]);
-            TextView tvFetcherStatus = (TextView)findViewById(R.id.tvFetcherStatus);
-            ProgressBar prgProcess = (ProgressBar)findViewById(R.id.prgProcess);
-            tvFetcherStatus.setText(getString(R.string.fetching, progress[0]));
-            prgProcess.setIndeterminate(false);
-            prgProcess.setMax(progress[1]);
-            prgProcess.setProgress(progress[0]);
-        }
-
-        private List<BodyPart> getFlatContentList(Multipart multipart) throws MessagingException, IOException {
-            List<BodyPart> results = new ArrayList<>();
-            for (int i = 0; i < multipart.getCount(); i++) {
-                BodyPart bodyPart = multipart.getBodyPart(i);
-
-                if (bodyPart.isMimeType("multipart/alternative")) {
-                    Multipart nestedPart = (Multipart) bodyPart.getContent();
-                    for (BodyPart nestedBody : getFlatContentList(nestedPart)) {
-                        results.add( nestedBody);
-                    }
-                } else if (bodyPart.isMimeType("text/plain")) {
-                    results.add(bodyPart);
-                }
-            }
-            return results;
-        }
     }
 
     private HashMap<String, Pattern> getPatterns() {
@@ -401,6 +218,189 @@ public class SmsToys extends AppCompatActivity implements DatePickerFragment.OnD
             editor.apply();
         }
         return cal.getTime();
+    }
+
+    private class FetchEmailsTask extends AsyncTask<Void, Integer, List<String>> {
+        Date lastChecked;
+        Date currentTime;
+
+        @Override
+        protected List<String> doInBackground(Void... params) {
+            int progressCounter = 0;
+            int progressMax;
+
+            Log.d("[DEBUG]", "SmsToys.FetchEmailsTask.doInBackground: " + this.toString() + " - Loading Email Settings");
+            SharedPreferences emailSettings = getSharedPreferences("EmailSettings", 0);
+            String host = emailSettings.getString("host", "");
+            String user = emailSettings.getString("user", "");
+            String password = emailSettings.getString("password", "");
+            String port = emailSettings.getString("port", "");
+            String protocol = emailSettings.getString("protocol", "");
+            Boolean is_ssl = emailSettings.getBoolean("is_ssl", true);
+            String ssl_factory = emailSettings.getString("ssl_factory", "");
+            String subject = emailSettings.getString("subject", "");
+            Log.d("[DEBUG]", "SmsToys.FetchEmailsTask.doInBackground: " + this.toString()
+                    + " - host: " + host
+                    + " - user: " + user
+                    + " - password: " + password
+                    + " - port: " + port
+                    + " - protocol: " + protocol
+                    + " - is_ssl: " + is_ssl.toString()
+                    + " - ssl factory: " + ssl_factory
+                    + " - subject: " + subject
+            );
+
+            Log.d("[DEBUG]", "SmsToys.FetchEmailsTask.doInBackground: " + this.toString() + " - Loading Date Settings");
+            lastChecked = getDate(true);
+            currentTime = getDate(false);
+            Log.d("[DEBUG]", "SmsToys.FetchEmailsTask.doInBackground: " + this.toString()
+                    + " - Last Checked Time: " + lastChecked.toString()
+                    + " - Current Time: " + currentTime.toString()
+            );
+
+            Log.d("[DEBUG]", "SmsToys.FetchEmailsTask.doInBackground: " + this.toString() + " - Set up connection");
+            Properties props = new Properties();
+            if (is_ssl) {
+                props.setProperty("mail.pop3.ssl.trust", "*");
+                props.setProperty("mail.pop3.socketFactory.class", ssl_factory);
+                props.setProperty("mail.pop3.socketFactory.fallback", "false");
+                props.setProperty("mail.pop3.socketFactory.port", port);
+            }
+            props.setProperty("mail.pop3.port", port);
+            URLName url = new URLName(protocol, host, Integer.parseInt(port), null, user, password);
+            Session session = Session.getInstance(props, null);
+
+            Log.d("[DEBUG]", "SmsToys.FetchEmailsTask.doInBackground: " + this.toString() + " - Connecting");
+            List<String> resultMessages = new ArrayList<>();
+            Store store;
+            Folder inbox;
+            Message[] inboxMessages;
+            try {
+                store = session.getStore(url);
+                store.connect();
+                Log.d("[DEBUG]", "SmsToys.FetchEmailsTask.doInBackground: " + this.toString() + " - Checking for new mail");
+                inbox = store.getFolder("INBOX");
+                inbox.open(Folder.READ_ONLY);
+                inboxMessages = inbox.getMessages();
+                progressMax = inbox.getMessageCount();
+                if (inboxMessages.length == 0) {
+                    return new ArrayList<>();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return new ArrayList<>();
+            }
+
+            publishProgress(progressCounter, progressMax, 1);
+
+            Log.d("[DEBUG]", "SmsToys.FetchEmailsTask.doInBackground: " + this.toString() + " - Fetch all mail");
+            // TODO: Fetch only mail that have not been fetched before. This will make the New filter meaningless so don't remove that when done as that could cause issues.
+            for (Message message : inboxMessages) {
+                try {
+                    message.getContent();
+                    progressCounter++;
+                    publishProgress(progressCounter, progressMax, 0);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            Log.d("[DEBUG]", "SmsToys.FetchEmailsTask.doInBackground: " + this.toString() + " - Return only new mail");
+            List<Message> newMessages = new ArrayList<>();
+            for (Message message : inboxMessages) {
+                try {
+                    if (message.getSentDate().after(lastChecked) && message.getSentDate().before(currentTime)) {
+                        newMessages.add(message);
+                    }
+                } catch (MessagingException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            Log.d("[DEBUG]", "SmsToys.FetchEmailsTask.doInBackground: " + this.toString() + " - Return only mail with correct subject");
+            List<Message> subjectMessages = new ArrayList<>();
+            for (Message message : newMessages) {
+                try {
+                    if (message.getSubject().toLowerCase().contains(subject.toLowerCase())) {
+                        subjectMessages.add(message);
+                    }
+                } catch (MessagingException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            Log.d("[DEBUG]", "SmsToys.FetchEmailsTask.doInBackground: " + this.toString() + " - Return only each part");
+            for (Message message : subjectMessages) {
+                try {
+                    Multipart multipart = (Multipart) message.getContent();
+                    for (BodyPart bodypart : getFlatContentList(multipart)) {
+                        String content = (String) bodypart.getContent();
+                        resultMessages.add(content);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            return resultMessages;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            Log.d("[DEBUG]", "SmsToys.FetchEmailsTask.onPreExecute: " + this.toString() + " - Thread Starting");
+            TextView tvFetcherStatus = (TextView) findViewById(R.id.tvFetcherStatus);
+            tvFetcherStatus.setText(getString(R.string.fetcher, "Starting"));
+            ProgressBar prgProcess = (ProgressBar) findViewById(R.id.prgProcess);
+            prgProcess.setVisibility(View.VISIBLE);
+        }
+
+        @Override
+        protected void onPostExecute(List<String> resultMessages) {
+            Log.d("[DEBUG]", "SmsToys.FetchEmailsTask.onPostExecute: " + this.toString() + " - Thread Finishing");
+            TextView tvFetcherStatus = (TextView) findViewById(R.id.tvFetcherStatus);
+            tvFetcherStatus.setText(getString(R.string.fetcher, "Idle"));
+            ProgressBar prgProcess = (ProgressBar) findViewById(R.id.prgProcess);
+            prgProcess.setVisibility(View.INVISIBLE);
+
+            HashMap<String, Pattern> patterns = getPatterns(); //new HashMap<>();
+
+            for (String mailContent : resultMessages) {
+                try {
+                    new ProcessEmailTask(patterns).execute(mailContent);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            handler.post(updateTime);
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+            Log.d("[DEBUG]", "SmsToys.FetchEmailsTask.onPostExecute: " + this.toString() + " - Progress: " + progress[0] + "/" + progress[1]);
+            TextView tvFetcherStatus = (TextView) findViewById(R.id.tvFetcherStatus);
+            ProgressBar prgProcess = (ProgressBar) findViewById(R.id.prgProcess);
+            tvFetcherStatus.setText(getString(R.string.fetching, progress[0]));
+            prgProcess.setIndeterminate(false);
+            prgProcess.setMax(progress[1]);
+            prgProcess.setProgress(progress[0]);
+        }
+
+        private List<BodyPart> getFlatContentList(Multipart multipart) throws MessagingException, IOException {
+            List<BodyPart> results = new ArrayList<>();
+            for (int i = 0; i < multipart.getCount(); i++) {
+                BodyPart bodyPart = multipart.getBodyPart(i);
+
+                if (bodyPart.isMimeType("multipart/alternative")) {
+                    Multipart nestedPart = (Multipart) bodyPart.getContent();
+                    for (BodyPart nestedBody : getFlatContentList(nestedPart)) {
+                        results.add(nestedBody);
+                    }
+                } else if (bodyPart.isMimeType("text/plain")) {
+                    results.add(bodyPart);
+                }
+            }
+            return results;
+        }
     }
 
     class updateCheckTask extends AsyncTask<Integer, Void, Integer> {

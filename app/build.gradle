@@ -19,7 +19,8 @@ android {
     }
     productFlavors {
     }
-return null}
+    return null
+}
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')

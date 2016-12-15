@@ -15,10 +15,6 @@ public class TimePickerFragment extends DialogFragment
         implements TimePickerDialog.OnTimeSetListener {
     private OnTimeSelectListener mCallback;
 
-    public interface OnTimeSelectListener {
-        void OnTimeSelected(int Hour, int Minute);
-    }
-
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -33,7 +29,7 @@ public class TimePickerFragment extends DialogFragment
 
     @NonNull
     @Override
-    public Dialog onCreateDialog(Bundle savedInstanceState){
+    public Dialog onCreateDialog(Bundle savedInstanceState) {
         final Calendar c = Calendar.getInstance();
         int hour = c.get(Calendar.HOUR_OF_DAY);
         int minute = c.get(Calendar.MINUTE);
@@ -43,5 +39,9 @@ public class TimePickerFragment extends DialogFragment
 
     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
         mCallback.OnTimeSelected(hourOfDay, minute);
+    }
+
+    public interface OnTimeSelectListener {
+        void OnTimeSelected(int Hour, int Minute);
     }
 }

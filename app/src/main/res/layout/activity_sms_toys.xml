@@ -11,78 +11,78 @@
     tools:context="com.smstoys.SmsToys">
 
     <Button
-        android:text="@string/process"
+        android:id="@+id/btnProcess"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:id="@+id/btnProcess"
-        android:onClick="btnProcess_Click"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentStart="true"
+        android:onClick="btnProcess_Click"
+        android:text="@string/process"
         tools:text="btnProcess" />
 
     <ProgressBar
+        android:id="@+id/prgProcess"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/prgProcess"
-        android:layout_alignParentRight="true"
+        android:layout_above="@+id/btnProcess"
         android:layout_alignParentEnd="true"
         android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
         android:layout_alignParentStart="true"
-        android:layout_above="@+id/btnProcess"
         android:visibility="invisible"
         tools:visibility="visible" />
 
     <TextView
-        android:text="@string/fetcher_idle"
+        android:id="@+id/tvFetcherStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_above="@+id/prgProcess"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:id="@+id/tvFetcherStatus"
-        android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentStart="true"
+        android:text="@string/fetcher_idle"
         tools:text="tvFetcherStatus" />
 
     <Button
-        android:text="@string/email_configuration"
+        android:id="@+id/btnEmailConfig"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:id="@+id/btnEmailConfig"
-        android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        tools:text="btnEmailConfig"
-        android:onClick="btnEmailConfig_Click" />
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:onClick="btnEmailConfig_Click"
+        android:text="@string/email_configuration"
+        tools:text="btnEmailConfig" />
 
     <Button
-        android:text="@string/override_date_and_time"
+        android:id="@+id/btnSetTime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/btnEmailConfig"
-        android:id="@+id/btnSetTime"
-        android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        tools:text="btnSetTime"
-        android:onClick="btnSetTime_Click"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentRight="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/btnEmailConfig"
+        android:onClick="btnSetTime_Click"
+        android:text="@string/override_date_and_time"
+        tools:text="btnSetTime" />
 
     <TextView
+        android:id="@+id/txtLastTime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/btnSetTime"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:id="@+id/txtLastTime"
-        android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/btnSetTime"
         tools:text="txtLastTime" />
 
 </RelativeLayout>

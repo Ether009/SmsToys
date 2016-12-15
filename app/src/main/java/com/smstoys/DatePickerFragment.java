@@ -15,24 +15,20 @@ public class DatePickerFragment extends DialogFragment
         implements DatePickerDialog.OnDateSetListener {
     private OnDateSelectListener mCallback;
 
-    public interface OnDateSelectListener {
-        void OnDateSelected(int Year, int Month, int Day);
-    }
-
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
 
         Activity activity;
 
-        if (context instanceof Activity){
-            activity=(Activity) context;
+        if (context instanceof Activity) {
+            activity = (Activity) context;
 
             try {
                 mCallback = (OnDateSelectListener) activity;
             } catch (ClassCastException e) {
                 throw new ClassCastException(activity.toString()
-                    + " must implement OnDateSelectListener");
+                        + " must implement OnDateSelectListener");
             }
         }
 
@@ -54,5 +50,9 @@ public class DatePickerFragment extends DialogFragment
     public void onDateSet(DatePicker view, int year, int month, int day) {
         // Do something with the date chosen by the user
         mCallback.OnDateSelected(view.getYear(), view.getMonth(), view.getDayOfMonth());
+    }
+
+    public interface OnDateSelectListener {
+        void OnDateSelected(int Year, int Month, int Day);
     }
 }
